@@ -131,6 +131,8 @@ class TasksController extends Controller
     public function update(Request $request, $id)
     {
 
+        $message = Task::find($id);
+        
         if (\Auth::id() === $message->user_id) {
         $this->validate($request,[
             'status' => 'required|max:10',
