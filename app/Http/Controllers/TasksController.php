@@ -15,11 +15,34 @@ class TasksController extends Controller
      */
     public function index()
     {
+/*
         $messages = Task::all();
         
         return view('tasks.index',[
             'messages' => $messages,
-            ]);        
+            ]);
+*/
+
+        $data = [];
+        if (\Auth::check()) {
+            $user = \Auth::user();
+            $messages = $user->tasks()->orderBy('created_at', 'desc')->paginate(10);
+            
+            $data = [
+                'user' => $user,
+                'messages' => $messages,
+            ];
+            return view('tasks.index',[
+            'messages' => $messages,
+            ]);
+        }
+        
+        return view('welcome', $data);            
+
+/*
+        return view('welcome');            
+*/
+
     }
 
     /**
@@ -48,12 +71,17 @@ class TasksController extends Controller
             'status' => 'required|max:10',
             'content' => 'required|max:191',
             ]);
-        
+/*        
         $message = new Task;
         $message->status = $request->status;
         $message->content = $request->content;
         $message->save();
-        
+*/
+        $request->user()->tasks()->create([
+            'content' => $request->content,
+            'status' => $request->status,
+        ]);
+
         return redirect('/');
     }
 
@@ -66,10 +94,13 @@ class TasksController extends Controller
     public function show($id)
     {
         $message = Task::find($id);
-        
+
+        if (\Auth::id() === $message->user_id) {
         return view('tasks.show',[
             'message' => $message,
             ]);
+        }
+        return redirect('/');
     }
 
     /**
@@ -82,9 +113,12 @@ class TasksController extends Controller
     {
         $message = Task::find($id);
         
+        if (\Auth::id() === $message->user_id) {
         return view('tasks.edit',[
             'message' => $message,
             ]);
+        }
+        return redirect('/');
     }
 
     /**
@@ -96,6 +130,8 @@ class TasksController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        if (\Auth::id() === $message->user_id) {
         $this->validate($request,[
             'status' => 'required|max:10',
             'content' => 'required|max:191',
@@ -105,7 +141,7 @@ class TasksController extends Controller
         $message->status = $request->status;
         $message->content = $request->content;
         $message->save();
-        
+        }
         return redirect('/');
     }
 
@@ -118,8 +154,9 @@ class TasksController extends Controller
     public function destroy($id)
     {
         $message = Task::find($id);
+        if (\Auth::id() === $message->user_id) {
         $message->delete();
-        
+        }
         return redirect('/');
     }
 }
